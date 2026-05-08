@@ -102,6 +102,64 @@ public class AccountController : Controller
         return View(model);
     }
 
+    [HttpGet]
+    public IActionResult ForgotPassword() => View();
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+    {
+        if (!ModelState.IsValid) return View(model);
+
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        // Always show the same success view to avoid user enumeration
+        if (user == null)
+        {
+            ViewBag.EmailNotFound = true;
+            return View("ForgotPasswordConfirm", model.Email);
+        }
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var resetLink = Url.Action(nameof(ResetPassword), "Account",
+            new { email = model.Email, token }, Request.Scheme)!;
+
+        // If SMTP is configured in future, send email here.
+        // For now, surface the link directly (dev/demo mode).
+        ViewBag.ResetLink = resetLink;
+        return View("ForgotPasswordConfirm", model.Email);
+    }
+
+    [HttpGet]
+    public IActionResult ResetPassword(string email, string token)
+    {
+        var vm = new ResetPasswordViewModel { Email = email, Token = token };
+        return View(vm);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+    {
+        if (!ModelState.IsValid) return View(model);
+
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user == null)
+        {
+            TempData["SuccessMessage"] = "Password has been reset. You can now log in.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        var result = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
+        if (result.Succeeded)
+        {
+            TempData["SuccessMessage"] = "Password reset successfully. Please log in with your new password.";
+            return RedirectToAction(nameof(Login));
+        }
+
+        foreach (var error in result.Errors)
+            ModelState.AddModelError(string.Empty, error.Description);
+
+        return View(model);
+    }
+
     [HttpPost, ValidateAntiForgeryToken, Authorize]
     public async Task<IActionResult> Logout()
     {

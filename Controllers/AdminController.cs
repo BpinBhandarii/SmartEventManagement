@@ -255,6 +255,38 @@ public class AdminController : Controller
         return View(queries);
     }
 
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> AdminResetPassword(string userId, string newPassword)
+    {
+        if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 6)
+        {
+            TempData["ErrorMessage"] = "Password must be at least 6 characters.";
+            return RedirectToAction(nameof(ManageUsers));
+        }
+
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            TempData["ErrorMessage"] = "User not found.";
+            return RedirectToAction(nameof(ManageUsers));
+        }
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+        if (result.Succeeded)
+        {
+            await _notificationService.SendAsync(userId,
+                "Your password has been reset by the administrator. Please log in with your new password.", "info");
+            TempData["SuccessMessage"] = $"Password for {user.FullName} has been reset.";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = string.Join(" ", result.Errors.Select(e => e.Description));
+        }
+
+        return RedirectToAction(nameof(ManageUsers));
+    }
+
     public async Task<IActionResult> EventDetails(int id)
     {
         var ev = await _db.Events

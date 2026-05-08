@@ -90,6 +90,13 @@
                                                         <i class="fa @(user.IsActive ? "fa-ban" : "fa-circle-check") me-1"></i>@(user.IsActive ? "Deactivate" : "Activate")
                                                     </button>
                                                 </form>
+                                                <button type="button" class="btn btn-sm btn-outline-primary me-1"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#resetPasswordModal"
+                                                        data-userid="@user.Id"
+                                                        data-username="@user.FullName">
+                                                    <i class="fa fa-key me-1"></i>Reset PW
+                                                </button>
                                                 <button type="button" class="btn btn-sm btn-outline-danger"
                                                         data-bs-toggle="modal"
                                                         data-bs-target="#deleteModal"
@@ -174,6 +181,36 @@
     </div>
 </div>
 
+<!-- Reset Password Modal -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-primary"><i class="fa fa-key me-2"></i>Reset Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="AdminResetPassword" method="post" id="resetPasswordForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">Set a new temporary password for <strong id="reset-username"></strong>. The user will be notified.</p>
+                    <input type="hidden" name="userId" id="reset-userid" />
+                    <div class="input-icon-wrapper">
+                        <i class="fa fa-lock input-icon"></i>
+                        <input type="password" name="newPassword" id="reset-new-password"
+                               class="form-control" placeholder="New password (min 6 chars, must include uppercase & digit)"
+                               required minlength="6" autocomplete="new-password" />
+                    </div>
+                    <div id="reset-pw-error" class="text-danger small mt-1" style="display:none"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa fa-check me-1"></i>Reset Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -203,6 +240,14 @@ document.getElementById('deleteModal').addEventListener('show.bs.modal', functio
     var btn = e.relatedTarget;
     document.getElementById('modal-userid').value = btn.getAttribute('data-userid');
     document.getElementById('modal-username').textContent = btn.getAttribute('data-username');
+});
+
+document.getElementById('resetPasswordModal').addEventListener('show.bs.modal', function (e) {
+    var btn = e.relatedTarget;
+    document.getElementById('reset-userid').value = btn.getAttribute('data-userid');
+    document.getElementById('reset-username').textContent = btn.getAttribute('data-username');
+    document.getElementById('reset-new-password').value = '';
+    document.getElementById('reset-pw-error').style.display = 'none';
 });
 initSignalR('@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value');
 </script>

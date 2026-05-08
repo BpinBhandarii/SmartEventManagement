@@ -40,9 +40,12 @@
                 <span asp-validation-for="Password" class="text-danger small"></span>
             </div>
 
-            <div class="form-check mb-4">
-                <input asp-for="RememberMe" class="form-check-input" />
-                <label asp-for="RememberMe" class="form-check-label small">Remember me</label>
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div class="form-check mb-0">
+                    <input asp-for="RememberMe" class="form-check-input" />
+                    <label asp-for="RememberMe" class="form-check-label small">Remember me</label>
+                </div>
+                <a asp-action="ForgotPassword" class="small fw-600 text-decoration-none" style="color:#f97316">Forgot password?</a>
             </div>
 
             <button type="submit" class="btn btn-gradient w-100 py-2">
