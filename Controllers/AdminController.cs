@@ -231,14 +231,16 @@ public class AdminController : Controller
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteFeedback(int feedbackId)
+    public async Task<IActionResult> DeleteFeedback(int feedbackId, int? eventId)
     {
         var feedback = await _db.Feedbacks.FindAsync(feedbackId);
         if (feedback != null)
         {
+            var eid = eventId ?? feedback.EventId;
             _db.Feedbacks.Remove(feedback);
             await _db.SaveChangesAsync();
             TempData["SuccessMessage"] = "Feedback deleted.";
+            return RedirectToAction(nameof(EventDetails), new { id = eid });
         }
         return RedirectToAction(nameof(Events));
     }
@@ -251,6 +253,23 @@ public class AdminController : Controller
             .OrderByDescending(q => q.AskedAt)
             .ToListAsync();
         return View(queries);
+    }
+
+    public async Task<IActionResult> EventDetails(int id)
+    {
+        var ev = await _db.Events
+            .Include(e => e.Organiser)
+            .Include(e => e.Registrations).ThenInclude(r => r.Attendee)
+            .Include(e => e.Feedbacks).ThenInclude(f => f.Attendee)
+            .FirstOrDefaultAsync(e => e.Id == id);
+
+        if (ev == null) return NotFound();
+
+        ViewBag.ActiveRegistrations = ev.Registrations.Count(r => !r.Cancelled);
+        ViewBag.SeatsRemaining = ev.Capacity - ev.Registrations.Count(r => !r.Cancelled);
+        ViewBag.AvgRating = ev.Feedbacks.Any() ? ev.Feedbacks.Average(f => f.Rating) : 0.0;
+
+        return View(ev);
     }
 
     public async Task<IActionResult> Analytics()

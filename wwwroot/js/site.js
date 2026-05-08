@@ -80,8 +80,11 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // SignalR — real-time notifications
+var _signalRStarted = false;
 function initSignalR(userId) {
     if (typeof signalR === 'undefined') return;
+    if (_signalRStarted) return;
+    _signalRStarted = true;
     var connection = new signalR.HubConnectionBuilder()
         .withUrl('/notificationHub')
         .withAutomaticReconnect()

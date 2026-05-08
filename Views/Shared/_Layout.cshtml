@@ -23,6 +23,8 @@
     <style>
     .quick-q-btn{background:#fff3e0;border:1px solid #fed7aa;border-radius:20px;padding:4px 10px;font-size:0.72rem;color:#c2410c;cursor:pointer;transition:background 0.15s}
     .quick-q-btn:hover{background:#fed7aa}
+    @@keyframes support-pulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.5)}70%{box-shadow:0 0 0 7px rgba(239,68,68,0)}}
+    #support-badge.has-new{animation:support-pulse 1.4s infinite}
     </style>
     <div id="support-widget" style="position:fixed;bottom:24px;right:24px;z-index:9000;font-family:'Poppins',sans-serif">
         <button id="support-toggle" onclick="toggleSupport()"
@@ -49,16 +51,18 @@
             <div id="support-messages" style="height:280px;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:#f7f8fc"></div>
 
             <div style="padding:8px 12px;border-top:1px solid #e8eaf0;background:#fafafa">
-                <div style="font-size:0.7rem;color:#999;margin-bottom:5px;font-weight:500">Quick questions</div>
+                <div style="font-size:0.7rem;color:#999;margin-bottom:5px;font-weight:500"><i class="fa fa-bolt me-1"></i>Quick questions — click to fill, then send</div>
                 <div style="display:flex;flex-wrap:wrap;gap:5px">
-                    <button class="quick-q-btn" onclick="askQuestion('How do I register for an event?')">Register for event</button>
-                    <button class="quick-q-btn" onclick="askQuestion('How do I cancel my registration?')">Cancel registration</button>
-                    <button class="quick-q-btn" onclick="askQuestion('When will I receive my ticket or confirmation?')">Event confirmation</button>
-                    <button class="quick-q-btn" onclick="askQuestion('How do I get a refund?')">Refund policy</button>
-                    <button class="quick-q-btn" onclick="askQuestion('How do I contact the event organizer?')">Contact organizer</button>
-                    <button class="quick-q-btn" onclick="askQuestion('I cannot access my account')">Account access</button>
-                    <button class="quick-q-btn" onclick="askQuestion('Where can I find event location details?')">Event location</button>
-                    <button class="quick-q-btn" onclick="askQuestion('How do I update my profile information?')">Update profile</button>
+                    <button class="quick-q-btn" onclick="fillQuestion('How do I register for an event?')"><i class="fa fa-calendar-plus me-1"></i>Register for event</button>
+                    <button class="quick-q-btn" onclick="fillQuestion('How do I cancel my registration?')"><i class="fa fa-calendar-xmark me-1"></i>Cancel registration</button>
+                    <button class="quick-q-btn" onclick="fillQuestion('When will I receive my ticket or confirmation?')"><i class="fa fa-ticket me-1"></i>Event confirmation</button>
+                    <button class="quick-q-btn" onclick="fillQuestion('How do I get a refund for a cancelled event?')"><i class="fa fa-rotate-left me-1"></i>Refund policy</button>
+                    <button class="quick-q-btn" onclick="fillQuestion('How do I contact the event organizer?')"><i class="fa fa-envelope me-1"></i>Contact organizer</button>
+                    <button class="quick-q-btn" onclick="fillQuestion('I cannot access my account. Can you help?')"><i class="fa fa-lock me-1"></i>Account access</button>
+                    <button class="quick-q-btn" onclick="fillQuestion('Where can I find the event location and directions?')"><i class="fa fa-location-dot me-1"></i>Event location</button>
+                    <button class="quick-q-btn" onclick="fillQuestion('How do I update my profile information?')"><i class="fa fa-user-pen me-1"></i>Update profile</button>
+                    <button class="quick-q-btn" onclick="fillQuestion('Why has my event registration been cancelled?')"><i class="fa fa-circle-question me-1"></i>Registration issue</button>
+                    <button class="quick-q-btn" onclick="fillQuestion('I am having a technical issue with the website.')"><i class="fa fa-wrench me-1"></i>Technical issue</button>
                 </div>
             </div>
 
@@ -134,14 +138,21 @@
         }
     }
 
+    var _unreadReplies = 0;
+
     function hideSupportBadge() {
+        _unreadReplies = 0;
         var b = document.getElementById('support-badge');
-        if (b) b.style.display = 'none';
+        if (b) { b.style.display = 'none'; b.classList.remove('has-new'); b.textContent = '!'; }
     }
 
     function showSupportBadge() {
+        _unreadReplies++;
         var b = document.getElementById('support-badge');
-        if (b) { b.style.display = 'flex'; }
+        if (!b) return;
+        b.textContent = _unreadReplies > 9 ? '9+' : _unreadReplies;
+        b.style.display = 'flex';
+        b.classList.add('has-new');
     }
 
     async function loadSupportHistory() {
@@ -183,6 +194,13 @@
         box.scrollTop = box.scrollHeight;
     }
 
+    function fillQuestion(text) {
+        var input = document.getElementById('support-input');
+        input.value = text;
+        input.focus();
+        input.setSelectionRange(text.length, text.length);
+    }
+
     async function askQuestion(preset) {
         var input = document.getElementById('support-input');
         var text = (preset || input.value).trim();
@@ -221,6 +239,13 @@
         showSupportBadge();
         if (supportOpen) loadSupportHistory();
     };
+    </script>
+    }
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+    <script>
+    initSignalR('@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value');
     </script>
     }
 </body>

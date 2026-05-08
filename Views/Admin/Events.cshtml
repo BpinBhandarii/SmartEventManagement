@@ -91,6 +91,9 @@
                                             </button>
                                         </form>
                                     }
+                                    <a asp-action="EventDetails" asp-route-id="@ev.Id" class="btn btn-sm btn-outline-primary me-1">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
                                     <form asp-action="DeleteEvent" method="post" class="d-inline">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="eventId" value="@ev.Id" />

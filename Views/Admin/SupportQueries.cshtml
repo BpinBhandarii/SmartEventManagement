@@ -58,9 +58,30 @@
                                     <div style="background:#fff3e0;border-left:3px solid #f97316;border-radius:4px;padding:10px 14px;font-size:0.85rem;color:#1e1e2d;margin-bottom:10px">
                                         @q.QuestionText
                                     </div>
+                                    <div class="mb-2 d-flex flex-wrap gap-1">
+                                        <span class="text-muted me-1" style="font-size:0.72rem;align-self:center"><i class="fa fa-bolt me-1"></i>Quick replies:</span>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm quick-reply" data-target="answer-@q.Id"
+                                                data-text="Thank you for reaching out! We have received your query and will look into it promptly."
+                                                style="font-size:0.72rem;padding:2px 8px">Received &amp; reviewing</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm quick-reply" data-target="answer-@q.Id"
+                                                data-text="Your issue has been resolved. Please try again and let us know if you need further assistance."
+                                                style="font-size:0.72rem;padding:2px 8px">Issue resolved</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm quick-reply" data-target="answer-@q.Id"
+                                                data-text="Your account has been approved and you can now log in with your credentials."
+                                                style="font-size:0.72rem;padding:2px 8px">Account approved</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm quick-reply" data-target="answer-@q.Id"
+                                                data-text="The event registration is now open. Please visit the Browse Events page to register."
+                                                style="font-size:0.72rem;padding:2px 8px">Registration open</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm quick-reply" data-target="answer-@q.Id"
+                                                data-text="We're sorry, this event has reached full capacity. We'll notify you if a spot becomes available."
+                                                style="font-size:0.72rem;padding:2px 8px">Event full</button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm quick-reply" data-target="answer-@q.Id"
+                                                data-text="Please contact us at admin@koi.edu.au for further assistance with this matter."
+                                                style="font-size:0.72rem;padding:2px 8px">Contact us</button>
+                                    </div>
                                     <div class="d-flex gap-2">
                                         <textarea id="answer-@q.Id" class="form-control form-control-sm" rows="2"
-                                                  placeholder="Type your answer…" style="font-size:0.82rem;resize:none"></textarea>
+                                                  placeholder="Type your answer or pick a quick reply above…" style="font-size:0.82rem;resize:none"></textarea>
                                         <div class="d-flex flex-column gap-1">
                                             <button class="btn btn-sm btn-primary" onclick="submitAnswer(@q.Id)" style="white-space:nowrap;font-size:0.78rem">
                                                 <i class="fa fa-paper-plane me-1"></i>Send Reply
@@ -123,6 +144,16 @@
 
 @section Scripts {
 <script>
+document.querySelectorAll('.quick-reply').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const ta = document.getElementById(btn.dataset.target);
+        if (ta) {
+            ta.value = btn.dataset.text;
+            ta.focus();
+        }
+    });
+});
+
 async function submitAnswer(queryId) {
     var textarea = document.getElementById('answer-' + queryId);
     var answer = textarea.value.trim();

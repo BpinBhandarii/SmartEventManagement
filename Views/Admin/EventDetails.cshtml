@@ -1,0 +1,279 @@
+@model SmartEventManagement.Models.Event
+@{
+    ViewData["Title"] = Model.Title;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var activeRegs  = (int)ViewBag.ActiveRegistrations;
+    var seatsLeft   = (int)ViewBag.SeatsRemaining;
+    var avgRating   = (double)ViewBag.AvgRating;
+    var activeAttendees = Model.Registrations.Where(r => !r.Cancelled).ToList();
+}
+
+<div class="d-flex">
+    <partial name="_AdminSidebar" />
+
+    <div class="main-content flex-grow-1">
+        <div class="top-bar">
+            <button class="btn btn-sm btn-light d-md-none me-2" id="sidebar-toggle"><i class="fa fa-bars"></i></button>
+            <h5 class="page-title">
+                <a asp-action="Events" class="text-muted text-decoration-none" style="font-weight:500">Manage Events</a>
+                <i class="fa fa-chevron-right mx-2 text-muted" style="font-size:0.7rem"></i>
+                <span>@Model.Title</span>
+            </h5>
+            <a asp-action="Events" class="btn btn-sm btn-outline-secondary ms-auto">
+                <i class="fa fa-arrow-left me-1"></i>Back
+            </a>
+        </div>
+
+        <div class="content-area">
+
+            <!-- Event Header Card -->
+            <div class="table-card p-4 mb-4">
+                <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
+                    <div class="flex-grow-1">
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <span class="badge rounded-pill @(Model.Status == "Approved" ? "badge-status-approved" : Model.Status == "Pending" ? "badge-status-pending" : Model.Status == "Rejected" ? "badge-status-cancelled" : "badge-status-completed")">
+                                @Model.Status
+                            </span>
+                            <span class="badge rounded-pill bg-light text-secondary border">@Model.Category</span>
+                        </div>
+                        <h4 class="fw-700 mb-2" style="color:#1e1e2d">@Model.Title</h4>
+                        <p class="text-muted mb-3" style="font-size:0.88rem;max-width:720px">@Model.Description</p>
+                        <div class="d-flex flex-wrap gap-3" style="font-size:0.82rem;color:#6b7280">
+                            <span><i class="fa fa-location-dot me-1 text-primary"></i>@Model.Location</span>
+                            <span><i class="fa fa-calendar me-1 text-primary"></i>@Model.Date.ToString("dddd, dd MMMM yyyy")</span>
+                            <span><i class="fa fa-clock me-1 text-primary"></i>@(new DateTime(Model.Time.Ticks).ToString("HH:mm"))</span>
+                            <span><i class="fa fa-users me-1 text-primary"></i>Capacity: @Model.Capacity</span>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        @if (Model.Status == "Pending")
+                        {
+                            <form asp-action="ApproveEvent" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="eventId" value="@Model.Id" />
+                                <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-check me-1"></i>Approve</button>
+                            </form>
+                            <form asp-action="RejectEvent" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="eventId" value="@Model.Id" />
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Reject this event?')"><i class="fa fa-xmark me-1"></i>Reject</button>
+                            </form>
+                        }
+                        @if (Model.Status == "Approved" || Model.Status == "Rejected")
+                        {
+                            <form asp-action="MarkEventPending" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="eventId" value="@Model.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-secondary" onclick="return confirm('Move back to Pending?')"><i class="fa fa-rotate-left me-1"></i>Pending</button>
+                            </form>
+                        }
+                        <form asp-action="DeleteEvent" asp-controller="Admin" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="eventId" value="@Model.Id" />
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this event? This cannot be undone.')">
+                                <i class="fa fa-trash me-1"></i>Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stat Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-3">
+                    <div class="table-card p-3 text-center">
+                        <div style="width:44px;height:44px;border-radius:12px;background:#ede9fe;display:flex;align-items:center;justify-content:center;margin:0 auto 10px">
+                            <i class="fa fa-user-group text-primary" style="font-size:1.1rem"></i>
+                        </div>
+                        <div class="fw-700" style="font-size:1.6rem;color:#1e1e2d">@activeRegs</div>
+                        <div class="text-muted" style="font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase">Active Registrations</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="table-card p-3 text-center">
+                        <div style="width:44px;height:44px;border-radius:12px;background:#d1fae5;display:flex;align-items:center;justify-content:center;margin:0 auto 10px">
+                            <i class="fa fa-chair text-success" style="font-size:1.1rem"></i>
+                        </div>
+                        <div class="fw-700" style="font-size:1.6rem;color:#1e1e2d">@seatsLeft</div>
+                        <div class="text-muted" style="font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase">Seats Remaining</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="table-card p-3 text-center">
+                        <div style="width:44px;height:44px;border-radius:12px;background:#fef9c3;display:flex;align-items:center;justify-content:center;margin:0 auto 10px">
+                            <i class="fa fa-star text-warning" style="font-size:1.1rem"></i>
+                        </div>
+                        <div class="fw-700" style="font-size:1.6rem;color:#1e1e2d">@(Model.Feedbacks.Any() ? avgRating.ToString("0.0") : "—")</div>
+                        <div class="text-muted" style="font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase">Avg Rating</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="table-card p-3 text-center">
+                        <div style="width:44px;height:44px;border-radius:12px;background:#fee2e2;display:flex;align-items:center;justify-content:center;margin:0 auto 10px">
+                            <i class="fa fa-comment text-danger" style="font-size:1.1rem"></i>
+                        </div>
+                        <div class="fw-700" style="font-size:1.6rem;color:#1e1e2d">@Model.Feedbacks.Count</div>
+                        <div class="text-muted" style="font-size:0.68rem;letter-spacing:0.05em;text-transform:uppercase">Total Reviews</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <!-- Organiser Card -->
+                <div class="col-md-4">
+                    <div class="table-card p-4 h-100">
+                        <div class="section-header mb-3"><i class="fa fa-user-tie me-2 text-primary"></i>Organiser</div>
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div style="width:44px;height:44px;border-radius:50%;background:#ede9fe;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;color:#6c63ff;flex-shrink:0">
+                                @(Model.Organiser?.FullName?.FirstOrDefault())
+                            </div>
+                            <div>
+                                <div class="fw-600" style="font-size:0.9rem">@Model.Organiser?.FullName</div>
+                                <div class="text-muted" style="font-size:0.75rem">@Model.Organiser?.Role</div>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-column gap-2" style="font-size:0.82rem;color:#6b7280">
+                            <span><i class="fa fa-envelope me-2 text-primary opacity-75"></i>@Model.Organiser?.Email</span>
+                            <span><i class="fa fa-calendar-plus me-2 text-primary opacity-75"></i>Joined @Model.Organiser?.RegisteredAt.ToString("dd MMM yyyy")</span>
+                        </div>
+                        <div class="d-flex gap-2 mt-3">
+                            <span class="badge bg-light text-secondary border">@Model.Organiser?.Role</span>
+                            @if (Model.Organiser?.IsApproved == true)
+                            {
+                                <span class="badge badge-status-approved">Approved</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attendees Card -->
+                <div class="col-md-8">
+                    <div class="table-card h-100">
+                        <div class="px-4 pt-3 pb-2 d-flex align-items-center justify-content-between">
+                            <span class="section-header"><i class="fa fa-users me-2 text-primary"></i>Attendees</span>
+                            <span class="text-muted small">@Model.Registrations.Count total (@activeRegs active)</span>
+                        </div>
+                        @if (!Model.Registrations.Any())
+                        {
+                            <div class="text-center py-4 text-muted small">No registrations yet.</div>
+                        }
+                        else
+                        {
+                            <table class="table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Attendee</th>
+                                        <th>Registered</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var reg in Model.Registrations.OrderByDescending(r => r.RegisteredAt))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <div style="width:32px;height:32px;border-radius:50%;background:#ede9fe;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;color:#6c63ff;flex-shrink:0">
+                                                        @(reg.Attendee?.FullName?.FirstOrDefault())
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-600 small">@reg.Attendee?.FullName</div>
+                                                        <div class="text-muted" style="font-size:0.72rem">@reg.Attendee?.Email</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="small text-muted">@reg.RegisteredAt.ToLocalTime().ToString("dd MMM yyyy")</td>
+                                            <td>
+                                                @if (!reg.Cancelled)
+                                                {
+                                                    <span class="badge badge-status-approved">Active</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge badge-status-cancelled">Cancelled</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ratings & Feedback -->
+            <div class="table-card mb-4">
+                <div class="px-4 pt-3 pb-2 d-flex align-items-center justify-content-between">
+                    <span class="section-header"><i class="fa fa-star me-2 text-warning"></i>Ratings &amp; Feedback</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="text-muted small">@Model.Feedbacks.Count review@(Model.Feedbacks.Count == 1 ? "" : "s")</span>
+                        @if (Model.Feedbacks.Any())
+                        {
+                            <span class="text-warning small">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <i class="fa fa-star @(i <= Math.Round(avgRating) ? "" : "opacity-25")"></i>
+                                }
+                            </span>
+                        }
+                    </div>
+                </div>
+                @if (!Model.Feedbacks.Any())
+                {
+                    <div class="text-center py-4 text-muted small">No feedback submitted yet.</div>
+                }
+                else
+                {
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Attendee</th>
+                                <th>Rating</th>
+                                <th>Comment</th>
+                                <th>Submitted</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var fb in Model.Feedbacks.OrderByDescending(f => f.SubmittedAt))
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-600 small">@fb.Attendee?.FullName</div>
+                                        <div class="text-muted" style="font-size:0.72rem">@fb.Attendee?.Email</div>
+                                    </td>
+                                    <td>
+                                        <span class="text-warning">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <i class="fa fa-star @(i <= fb.Rating ? "" : "opacity-25")"></i>
+                                            }
+                                        </span>
+                                        <span class="text-muted small ms-1">@fb.Rating/5</span>
+                                    </td>
+                                    <td class="small text-muted" style="max-width:300px">
+                                        @(fb.Comment?.Length > 140 ? fb.Comment[..140] + "…" : fb.Comment)
+                                    </td>
+                                    <td class="small text-muted text-nowrap">@fb.SubmittedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
+                                    <td>
+                                        <form asp-action="DeleteFeedback" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="feedbackId" value="@fb.Id" />
+                                            <input type="hidden" name="eventId" value="@Model.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2"
+                                                    onclick="return confirm('Delete this feedback?')">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+
+        </div>
+    </div>
+</div>
