@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Smart Event Management</title>
+    <!-- Google Fonts: Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Font Awesome 6 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    @RenderBody()
+
+    @if (User.Identity?.IsAuthenticated == true && !User.IsInRole("Admin"))
+    {
+    <!-- Support Chat Widget -->
+    <style>
+    .quick-q-btn{background:#fff3e0;border:1px solid #fed7aa;border-radius:20px;padding:4px 10px;font-size:0.72rem;color:#c2410c;cursor:pointer;transition:background 0.15s}
+    .quick-q-btn:hover{background:#fed7aa}
+    </style>
+    <div id="support-widget" style="position:fixed;bottom:24px;right:24px;z-index:9000;font-family:'Poppins',sans-serif">
+        <button id="support-toggle" onclick="toggleSupport()"
+                style="width:56px;height:56px;border-radius:50%;background:#f97316;border:none;color:#fff;font-size:1.4rem;cursor:pointer;box-shadow:0 4px 16px rgba(249,115,22,0.45);display:flex;align-items:center;justify-content:center;transition:transform 0.2s"
+                title="Support Center">
+            <i class="fa fa-headset" id="support-toggle-icon"></i>
+        </button>
+        <span id="support-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border-radius:50%;width:20px;height:20px;font-size:0.65rem;align-items:center;justify-content:center;font-weight:700;box-shadow:0 2px 6px rgba(239,68,68,0.5)">!</span>
+
+        <div id="support-panel" style="display:none;position:absolute;bottom:68px;right:0;width:360px;border-radius:16px;background:#fff;box-shadow:0 8px 32px rgba(0,0,0,0.18);overflow:hidden;flex-direction:column">
+            <div style="background:#f97316;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px">
+                <div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">
+                    <i class="fa fa-headset"></i>
+                </div>
+                <div>
+                    <div style="font-weight:600;font-size:0.9rem">Support Center</div>
+                    <div style="font-size:0.7rem;opacity:0.85"><i class="fa fa-circle" style="font-size:0.45rem;color:#4ade80;vertical-align:middle"></i> Ask the admin anything</div>
+                </div>
+                <button onclick="toggleSupport()" style="margin-left:auto;background:none;border:none;color:#fff;font-size:1.1rem;cursor:pointer;opacity:0.85">
+                    <i class="fa fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="support-messages" style="height:280px;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:#f7f8fc"></div>
+
+            <div style="padding:8px 12px;border-top:1px solid #e8eaf0;background:#fafafa">
+                <div style="font-size:0.7rem;color:#999;margin-bottom:5px;font-weight:500">Quick questions</div>
+                <div style="display:flex;flex-wrap:wrap;gap:5px">
+                    <button class="quick-q-btn" onclick="askQuestion('How do I register for an event?')">Register for event</button>
+                    <button class="quick-q-btn" onclick="askQuestion('How do I cancel my registration?')">Cancel registration</button>
+                    <button class="quick-q-btn" onclick="askQuestion('When will I receive my ticket or confirmation?')">Event confirmation</button>
+                    <button class="quick-q-btn" onclick="askQuestion('How do I get a refund?')">Refund policy</button>
+                    <button class="quick-q-btn" onclick="askQuestion('How do I contact the event organizer?')">Contact organizer</button>
+                    <button class="quick-q-btn" onclick="askQuestion('I cannot access my account')">Account access</button>
+                    <button class="quick-q-btn" onclick="askQuestion('Where can I find event location details?')">Event location</button>
+                    <button class="quick-q-btn" onclick="askQuestion('How do I update my profile information?')">Update profile</button>
+                </div>
+            </div>
+
+            <div style="padding:10px;border-top:1px solid #e8eaf0;background:#fff;display:flex;gap:8px">
+                <input id="support-input" type="text" placeholder="Or type your own question…"
+                       style="flex:1;border:1px solid #e8eaf0;border-radius:24px;padding:8px 14px;font-size:0.82rem;outline:none;font-family:'Poppins',sans-serif"
+                       onkeydown="if(event.key==='Enter')askQuestion()" />
+                <button onclick="askQuestion()"
+                        style="width:36px;height:36px;border-radius:50%;background:#f97316;border:none;color:#fff;cursor:pointer;font-size:0.9rem;flex-shrink:0">
+                    <i class="fa fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Global Toast Container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="toast align-items-center text-bg-success border-0 show" role="alert" data-bs-autohide="true" data-bs-delay="4000">
+                <div class="d-flex">
+                    <div class="toast-body"><i class="fa fa-check-circle me-2"></i>@TempData["SuccessMessage"]</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="toast align-items-center text-bg-danger border-0 show" role="alert" data-bs-autohide="true" data-bs-delay="4000">
+                <div class="d-flex">
+                    <div class="toast-body"><i class="fa fa-circle-xmark me-2"></i>@TempData["ErrorMessage"]</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        }
+        @if (TempData["WarningMessage"] != null)
+        {
+            <div class="toast align-items-center text-bg-warning border-0 show" role="alert" data-bs-autohide="true" data-bs-delay="5000">
+                <div class="d-flex">
+                    <div class="toast-body"><i class="fa fa-triangle-exclamation me-2"></i>@TempData["WarningMessage"]</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        }
+        <div id="signalr-toast-container"></div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- SignalR -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <!-- Custom JS -->
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+    @if (User.Identity?.IsAuthenticated == true && !User.IsInRole("Admin"))
+    {
+    <script>
+    // ── Support Chat Widget ──────────────────────────────────
+    var supportOpen = false;
+
+    function toggleSupport() {
+        supportOpen = !supportOpen;
+        var panel = document.getElementById('support-panel');
+        panel.style.display = supportOpen ? 'flex' : 'none';
+        document.getElementById('support-toggle-icon').className = supportOpen ? 'fa fa-xmark' : 'fa fa-headset';
+        if (supportOpen) {
+            hideSupportBadge();
+            loadSupportHistory();
+        }
+    }
+
+    function hideSupportBadge() {
+        var b = document.getElementById('support-badge');
+        if (b) b.style.display = 'none';
+    }
+
+    function showSupportBadge() {
+        var b = document.getElementById('support-badge');
+        if (b) { b.style.display = 'flex'; }
+    }
+
+    async function loadSupportHistory() {
+        var box = document.getElementById('support-messages');
+        box.innerHTML = '<div style="text-align:center;color:#bbb;font-size:0.78rem;padding:30px 0"><i class="fa fa-circle-notch fa-spin me-1"></i>Loading…</div>';
+        try {
+            var res = await fetch('/api/support/history');
+            if (!res.ok) { box.innerHTML = '<div style="text-align:center;color:#bbb;padding:30px;font-size:0.8rem">Could not load messages.</div>'; return; }
+            var queries = await res.json();
+            renderSupportHistory(queries);
+        } catch {
+            box.innerHTML = '<div style="text-align:center;color:#bbb;padding:30px;font-size:0.8rem">Network error.</div>';
+        }
+    }
+
+    function renderSupportHistory(queries) {
+        var box = document.getElementById('support-messages');
+        if (!queries.length) {
+            box.innerHTML = '<div style="text-align:center;padding:24px 16px"><div style="font-size:2.2rem;margin-bottom:8px">👋</div><div style="color:#666;font-size:0.82rem;line-height:1.5">Hi! Select a quick question below or type your own. Our admin team will reply shortly.</div></div>';
+            return;
+        }
+        box.innerHTML = '';
+        var sorted = queries.slice().reverse();
+        sorted.forEach(function(q) {
+            var qDiv = document.createElement('div');
+            qDiv.style.cssText = 'display:flex;justify-content:flex-end';
+            qDiv.innerHTML = '<div style="max-width:88%"><div style="background:#f97316;color:#fff;border-radius:12px 12px 4px 12px;padding:9px 13px;font-size:0.82rem;word-break:break-word">' + escHtml(q.questionText) + '</div><div style="text-align:right;font-size:0.65rem;color:#aaa;margin-top:2px">' + fmtTime(q.askedAt) + '</div></div>';
+            box.appendChild(qDiv);
+
+            var aDiv = document.createElement('div');
+            aDiv.setAttribute('data-qid', q.id);
+            if (q.status === 'Answered') {
+                aDiv.innerHTML = '<div style="max-width:88%"><div style="background:#fff;border:1px solid #e8eaf0;border-radius:12px 12px 12px 4px;padding:9px 13px;font-size:0.82rem;color:#1e1e2d;box-shadow:0 1px 4px rgba(0,0,0,0.06);word-break:break-word">' + escHtml(q.answer) + '</div><div style="font-size:0.65rem;color:#aaa;margin-top:2px"><i class="fa fa-user-shield me-1"></i>Admin · ' + fmtTime(q.answeredAt) + '</div></div>';
+            } else {
+                aDiv.innerHTML = '<div style="max-width:88%"><div style="background:#fff8f0;border:1px dashed #fdba74;border-radius:12px 12px 12px 4px;padding:8px 12px;font-size:0.78rem;color:#92400e"><i class="fa fa-clock me-1 text-warning"></i>Waiting for admin reply…</div></div>';
+            }
+            box.appendChild(aDiv);
+        });
+        box.scrollTop = box.scrollHeight;
+    }
+
+    async function askQuestion(preset) {
+        var input = document.getElementById('support-input');
+        var text = (preset || input.value).trim();
+        if (!text) { input.focus(); return; }
+        input.value = '';
+
+        try {
+            var res = await fetch('/api/support/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: text })
+            });
+            if (res.ok) {
+                loadSupportHistory();
+            } else if (res.status === 401) {
+                alert('Please log in to ask questions.');
+            } else {
+                alert('Could not send your question. Please try again.');
+            }
+        } catch {
+            alert('Network error. Please try again.');
+        }
+    }
+
+    function escHtml(s) {
+        if (!s) return '';
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function fmtTime(iso) {
+        if (!iso) return '';
+        try { return new Date(iso).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); } catch { return ''; }
+    }
+
+    window.onSupportReply = function(data) {
+        showSupportBadge();
+        if (supportOpen) loadSupportHistory();
+    };
+    </script>
+    }
+</body>
+</html>

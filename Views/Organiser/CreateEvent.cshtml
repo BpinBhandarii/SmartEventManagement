@@ -1,0 +1,97 @@
+@model SmartEventManagement.ViewModels.EventViewModel
+@{
+    ViewData["Title"] = "Create Event";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var categories = new[] { "Tech", "Business", "Music", "Arts", "Sports", "Education", "Health", "Food", "Other" };
+}
+
+<div class="d-flex">
+    <partial name="_OrganiserSidebar" />
+    <div class="main-content flex-grow-1">
+        <div class="top-bar">
+            <button class="btn btn-sm btn-light d-md-none me-2" id="sidebar-toggle"><i class="fa fa-bars"></i></button>
+            <h5 class="page-title"><i class="fa fa-calendar-plus me-2 text-primary"></i>Create New Event</h5>
+        </div>
+        <div class="content-area">
+            <div class="card p-4" style="max-width:750px;margin:0 auto">
+                <form asp-action="CreateEvent" method="post">
+                    @Html.AntiForgeryToken()
+                    <asp-validation-summary model-only="true" class="alert alert-danger rounded-3 mb-3"></asp-validation-summary>
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="form-floating">
+                                <input asp-for="Title" class="form-control" placeholder="Event Title" />
+                                <label asp-for="Title"><i class="fa fa-heading me-1"></i>Event Title</label>
+                                <span asp-validation-for="Title" class="text-danger small"></span>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-floating">
+                                <textarea asp-for="Description" class="form-control" placeholder="Description" style="height:120px"></textarea>
+                                <label asp-for="Description">Description</label>
+                                <span asp-validation-for="Description" class="text-danger small"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input asp-for="Location" class="form-control" placeholder="Location" />
+                                <label asp-for="Location"><i class="fa fa-location-dot me-1"></i>Location</label>
+                                <span asp-validation-for="Location" class="text-danger small"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <select asp-for="Category" class="form-select">
+                                    @foreach (var cat in categories)
+                                    {
+                                        <option value="@cat">@cat</option>
+                                    }
+                                </select>
+                                <label asp-for="Category">Category</label>
+                                <span asp-validation-for="Category" class="text-danger small"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input asp-for="Date" class="form-control" type="date" />
+                                <label asp-for="Date"><i class="fa fa-calendar me-1"></i>Date</label>
+                                <span asp-validation-for="Date" class="text-danger small"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-floating">
+                                <input asp-for="Time" class="form-control" type="time" />
+                                <label asp-for="Time"><i class="fa fa-clock me-1"></i>Time</label>
+                                <span asp-validation-for="Time" class="text-danger small"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-floating">
+                                <input asp-for="Capacity" class="form-control" type="number" placeholder="Capacity" />
+                                <label asp-for="Capacity"><i class="fa fa-users me-1"></i>Capacity</label>
+                                <span asp-validation-for="Capacity" class="text-danger small"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info rounded-3 mt-3 small">
+                        <i class="fa fa-info-circle me-2"></i>
+                        Your event will be submitted for admin approval before going live.
+                    </div>
+
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="submit" class="btn btn-gradient px-4">
+                            <i class="fa fa-paper-plane me-2"></i>Submit Event
+                        </button>
+                        <a asp-action="MyEvents" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,93 @@
+@model List<SmartEventManagement.Models.Notification>
+@{
+    ViewData["Title"] = "Notifications";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex">
+    <partial name="_AdminSidebar" />
+    <div class="main-content flex-grow-1">
+        <div class="top-bar">
+            <button class="btn btn-sm btn-light d-md-none me-2" id="sidebar-toggle"><i class="fa fa-bars"></i></button>
+            <h5 class="page-title"><i class="fa fa-bell me-2 text-primary"></i>Notifications</h5>
+        </div>
+        <div class="content-area">
+            @if (!Model.Any())
+            {
+                <div class="text-center py-5">
+                    <i class="fa fa-bell-slash fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No notifications yet</h5>
+                </div>
+            }
+            @foreach (var n in Model)
+            {
+                var iconClass = n.Type switch {
+                    "approval" => "fa-check-circle",
+                    "cancellation" => "fa-circle-xmark",
+                    "reminder" => "fa-clock",
+                    "update" => "fa-pen",
+                    _ => "fa-bell"
+                };
+                <div class="notification-item @(n.IsRead ? "read" : "")" data-id="@n.Id" style="cursor:pointer">
+                    <div class="notif-icon @n.Type">
+                        <i class="fa @iconClass"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <p class="mb-1 small @(n.IsRead ? "text-muted" : "fw-600") notif-msg">@n.Message</p>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="text-muted" style="font-size:0.73rem">
+                                <i class="fa fa-clock me-1"></i>@n.SentAt.ToString("dd MMM yyyy HH:mm")
+                            </span>
+                            @if (n.Event != null)
+                            {
+                                <span class="badge bg-primary-soft text-primary" style="font-size:0.7rem">
+                                    <i class="fa fa-calendar me-1"></i>@n.Event.Title
+                                </span>
+                            }
+                        </div>
+                    </div>
+                    <div class="flex-shrink-0">
+                        @if (!n.IsRead)
+                        {
+                            <span class="notif-dot" style="width:9px;height:9px;background:var(--primary);border-radius:50%;display:inline-block"></span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+initSignalR('@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value');
+
+(function () {
+    const token = () => document.querySelector('[name=__RequestVerificationToken]')?.value ?? '';
+
+    document.querySelectorAll('.notification-item[data-id]').forEach(item => {
+        item.addEventListener('click', async function () {
+            const dot = this.querySelector('.notif-dot');
+            if (!dot) return;
+            const id = this.dataset.id;
+            const res = await fetch('@Url.Action("MarkNotificationRead", "Admin")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `id=${id}&__RequestVerificationToken=${encodeURIComponent(token())}`
+            });
+            if (!(await res.json()).success) return;
+            dot.remove();
+            const msg = this.querySelector('.notif-msg');
+            if (msg) { msg.classList.remove('fw-600'); msg.classList.add('text-muted'); }
+            this.classList.add('read');
+            const badge = document.querySelector('.sidebar-nav .badge');
+            if (badge) {
+                const n = parseInt(badge.textContent) - 1;
+                n <= 0 ? badge.remove() : (badge.textContent = n > 99 ? '99+' : n);
+            }
+        });
+    });
+}());
+</script>
+@Html.AntiForgeryToken()
+}

@@ -1,0 +1,151 @@
+@model SmartEventManagement.ViewModels.EventDetailsViewModel
+@{
+    ViewData["Title"] = Model.Event.Title;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var ev = Model.Event;
+    var pct = ev.Capacity > 0 ? (int)((double)Model.RegisteredCount / ev.Capacity * 100) : 0;
+}
+
+<div class="d-flex">
+    <partial name="_AttendeeSidebar" />
+    <div class="main-content flex-grow-1">
+        <div class="top-bar">
+            <button class="btn btn-sm btn-light d-md-none me-2" id="sidebar-toggle"><i class="fa fa-bars"></i></button>
+            <h5 class="page-title"><i class="fa fa-calendar me-2 text-primary"></i>Event Details</h5>
+            <a asp-action="BrowseEvents" class="btn btn-sm btn-outline-secondary">
+                <i class="fa fa-arrow-left me-1"></i>Back
+            </a>
+        </div>
+        <div class="content-area">
+            <!-- Event Hero Banner -->
+            <div class="card mb-4" style="background:var(--gradient);color:#fff;border:none;border-radius:var(--card-radius);padding:2.5rem 2rem;overflow:hidden;position:relative">
+                <div style="position:absolute;right:2rem;top:50%;transform:translateY(-50%);font-size:6rem;opacity:0.15">
+                    @(ev.Category == "Tech" ? "💻" : ev.Category == "Music" ? "🎵" :
+                      ev.Category == "Sports" ? "⚽" : ev.Category == "Arts" ? "🎨" :
+                      ev.Category == "Business" ? "💼" : ev.Category == "Education" ? "📚" : "🎉")
+                </div>
+                <span class="badge mb-2" style="background:rgba(255,255,255,0.25);font-size:0.8rem">@ev.Category</span>
+                <h2 class="fw-800 mb-3">@ev.Title</h2>
+                <div class="d-flex flex-wrap gap-4">
+                    <div><i class="fa fa-calendar me-1"></i><strong>@ev.Date.ToString("dddd, dd MMMM yyyy")</strong></div>
+                    <div><i class="fa fa-clock me-1"></i><strong>@ev.Time.ToString(@"hh\:mm")</strong></div>
+                    <div><i class="fa fa-location-dot me-1"></i><strong>@ev.Location</strong></div>
+                    <div><i class="fa fa-users me-1"></i><strong>@Model.RegisteredCount / @ev.Capacity seats</strong></div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-8">
+                    <!-- Description -->
+                    <div class="card p-4 mb-4">
+                        <h5 class="section-header"><i class="fa fa-align-left me-2 text-primary"></i>About This Event</h5>
+                        <p class="text-muted" style="line-height:1.8">@ev.Description</p>
+                        <div class="d-flex align-items-center gap-2 mt-2 text-muted small">
+                            <i class="fa fa-user-tie text-primary"></i>
+                            Organised by <strong class="ms-1">@ev.Organiser?.FullName</strong>
+                        </div>
+                    </div>
+
+                    <!-- Feedback Section -->
+                    @if (Model.Feedbacks.Any())
+                    {
+                        <div class="card p-4">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h5 class="section-header mb-0"><i class="fa fa-star me-2 text-primary"></i>Reviews</h5>
+                                <div>
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        <i class="fa fa-star @(i <= (int)Model.AvgRating ? "text-warning" : "text-muted")"></i>
+                                    }
+                                    <span class="ms-1 fw-700">@Model.AvgRating.ToString("F1")</span>
+                                    <span class="text-muted small ms-1">(@Model.Feedbacks.Count reviews)</span>
+                                </div>
+                            </div>
+                            @foreach (var fb in Model.Feedbacks.Take(5))
+                            {
+                                <div class="border-bottom pb-3 mb-3">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <div class="avatar-initials" style="width:32px;height:32px;font-size:0.75rem">
+                                            @(fb.Attendee?.FullName[0].ToString().ToUpper() ?? "?")
+                                        </div>
+                                        <strong class="small">@fb.Attendee?.FullName</strong>
+                                        <span class="ms-auto">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <i class="fa fa-star @(i <= fb.Rating ? "text-warning" : "text-muted")" style="font-size:0.8rem"></i>
+                                            }
+                                        </span>
+                                    </div>
+                                    <p class="small text-muted mb-0 ms-5">@fb.Comment</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- Sidebar -->
+                <div class="col-md-4">
+                    <!-- Registration Card -->
+                    <div class="card p-4 mb-3">
+                        <h6 class="section-header"><i class="fa fa-ticket me-2 text-primary"></i>Registration</h6>
+
+                        <!-- Capacity Bar -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between small text-muted mb-1">
+                                <span>@Model.RegisteredCount registered</span>
+                                <span>@(ev.Capacity - Model.RegisteredCount) spots left</span>
+                            </div>
+                            <div class="capacity-bar">
+                                <div class="progress" style="height:10px">
+                                    <div class="progress-bar" style="width:@pct%"
+                                         aria-valuenow="@pct" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                            <div class="small text-muted mt-1">@pct% full</div>
+                        </div>
+
+                        @if (Model.IsRegistered)
+                        {
+                            <div class="alert alert-success rounded-3 small py-2">
+                                <i class="fa fa-check-circle me-2"></i>You're registered for this event!
+                            </div>
+                        }
+                        else if (Model.CanRegister)
+                        {
+                            <form asp-action="Register" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="eventId" value="@ev.Id" />
+                                <button type="submit" class="btn btn-gradient w-100 py-2">
+                                    <i class="fa fa-ticket me-2"></i>Register Now
+                                </button>
+                            </form>
+                        }
+                        else if (Model.RegisteredCount >= ev.Capacity)
+                        {
+                            <div class="alert alert-danger rounded-3 small py-2">
+                                <i class="fa fa-ban me-2"></i>This event is fully booked.
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-secondary rounded-3 small py-2">
+                                <i class="fa fa-clock me-2"></i>Registration for this event has closed.
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Quick Info -->
+                    <div class="card p-3">
+                        <h6 class="section-header"><i class="fa fa-info-circle me-2 text-primary"></i>Quick Info</h6>
+                        <ul class="list-unstyled small text-muted mb-0">
+                            <li class="mb-2"><i class="fa fa-tag me-2 text-primary"></i>Category: @ev.Category</li>
+                            <li class="mb-2"><i class="fa fa-calendar me-2 text-primary"></i>@ev.Date.ToString("dd MMM yyyy")</li>
+                            <li class="mb-2"><i class="fa fa-clock me-2 text-primary"></i>@ev.Time.ToString(@"hh\:mm")</li>
+                            <li><i class="fa fa-users me-2 text-primary"></i>Capacity: @ev.Capacity</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

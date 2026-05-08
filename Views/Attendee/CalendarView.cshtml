@@ -1,0 +1,80 @@
+@{
+    ViewData["Title"] = "My Calendar";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex">
+    <partial name="_AttendeeSidebar" />
+    <div class="main-content flex-grow-1">
+        <div class="top-bar">
+            <button class="btn btn-sm btn-light d-md-none me-2" id="sidebar-toggle"><i class="fa fa-bars"></i></button>
+            <h5 class="page-title"><i class="fa fa-calendar me-2 text-primary"></i>My Event Calendar</h5>
+        </div>
+        <div class="content-area">
+            <div class="card p-3">
+                <div id="calendar"></div>
+            </div>
+
+            <!-- Event detail popover -->
+            <div id="event-popover" class="card shadow" style="display:none;position:fixed;z-index:1080;min-width:240px;max-width:300px;padding:1rem">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <strong id="pop-title" style="font-size:0.95rem"></strong>
+                    <button type="button" class="btn-close btn-sm" onclick="document.getElementById('event-popover').style.display='none'"></button>
+                </div>
+                <div class="text-muted small" id="pop-location"><i class="fa fa-location-dot me-1"></i></div>
+                <div class="text-muted small mt-1" id="pop-category"><i class="fa fa-tag me-1"></i></div>
+                <a id="pop-link" href="#" class="btn btn-sm btn-gradient mt-3 w-100">View Details</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
+<style>
+    #calendar { font-family: 'Poppins', sans-serif; }
+    .fc-toolbar-title { font-size: 1.1rem !important; font-weight: 600; }
+    .fc-button { background: var(--primary) !important; border-color: var(--primary) !important; font-size: 0.8rem !important; }
+    .fc-button:hover { opacity: 0.85; }
+    .fc-event { cursor: pointer; border-radius: 6px !important; font-size: 0.78rem; padding: 2px 4px; }
+    .fc-day-today { background: var(--primary-lt) !important; }
+</style>
+}
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,listMonth'
+        },
+        height: 'auto',
+        events: '/Attendee/CalendarEvents',
+        eventClick: function (info) {
+            info.jsEvent.preventDefault();
+            var props = info.event.extendedProps;
+            var popover = document.getElementById('event-popover');
+            document.getElementById('pop-title').textContent = info.event.title;
+            document.getElementById('pop-location').innerHTML = '<i class="fa fa-location-dot me-1"></i>' + (props.location || '');
+            document.getElementById('pop-category').innerHTML = '<i class="fa fa-tag me-1"></i>' + (props.category || '');
+            document.getElementById('pop-link').href = info.event.url;
+            popover.style.display = 'block';
+            popover.style.left = Math.min(info.jsEvent.clientX + 10, window.innerWidth - 320) + 'px';
+            popover.style.top = Math.min(info.jsEvent.clientY + 10, window.innerHeight - 200) + 'px';
+        }
+    });
+    calendar.render();
+
+    document.addEventListener('click', function (e) {
+        var pop = document.getElementById('event-popover');
+        if (!pop.contains(e.target)) pop.style.display = 'none';
+    });
+});
+initSignalR('@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value');
+</script>
+}

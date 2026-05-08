@@ -1,0 +1,168 @@
+@model IEnumerable<SmartEventManagement.Models.SupportQuery>
+@{
+    ViewData["Title"] = "Support Queries";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var pending = Model.Where(q => q.Status == "Pending").ToList();
+    var answered = Model.Where(q => q.Status == "Answered").ToList();
+}
+
+<div class="d-flex">
+    <partial name="_AdminSidebar" />
+
+    <div class="main-content flex-grow-1">
+        <div class="top-bar">
+            <button class="btn btn-sm btn-light d-md-none me-2" id="sidebar-toggle">
+                <i class="fa fa-bars"></i>
+            </button>
+            <h5 class="page-title"><i class="fa fa-headset me-2 text-primary"></i>Support Queries</h5>
+            <div class="d-flex align-items-center gap-2">
+                @if (pending.Count > 0)
+                {
+                    <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">
+                        <i class="fa fa-clock me-1"></i>@pending.Count Pending
+                    </span>
+                }
+            </div>
+        </div>
+
+        <div class="content-area">
+
+            @if (pending.Count == 0 && answered.Count == 0)
+            {
+                <div class="text-center py-5">
+                    <div style="font-size:3rem;margin-bottom:12px;opacity:0.3"><i class="fa fa-headset"></i></div>
+                    <p class="text-muted">No support queries yet.</p>
+                </div>
+            }
+
+            @if (pending.Count > 0)
+            {
+                <div class="table-card mb-4">
+                    <div class="px-3 pt-3 pb-2 d-flex align-items-center gap-2">
+                        <span class="section-header"><i class="fa fa-clock me-2 text-warning"></i>Pending Queries</span>
+                        <span class="badge bg-warning text-dark">@pending.Count</span>
+                    </div>
+                    @foreach (var q in pending)
+                    {
+                        <div class="p-3 border-bottom" id="query-@q.Id">
+                            <div class="d-flex align-items-start gap-3 mb-2">
+                                <div style="width:36px;height:36px;border-radius:50%;background:#fff3e0;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                                    <i class="fa fa-user text-warning"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <strong style="font-size:0.85rem">@(q.User?.FullName ?? "Unknown User")</strong>
+                                        <span class="text-muted" style="font-size:0.72rem">@(q.User?.Email)</span>
+                                        <span class="ms-auto text-muted" style="font-size:0.72rem"><i class="fa fa-clock me-1"></i>@q.AskedAt.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</span>
+                                    </div>
+                                    <div style="background:#fff3e0;border-left:3px solid #f97316;border-radius:4px;padding:10px 14px;font-size:0.85rem;color:#1e1e2d;margin-bottom:10px">
+                                        @q.QuestionText
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <textarea id="answer-@q.Id" class="form-control form-control-sm" rows="2"
+                                                  placeholder="Type your answer…" style="font-size:0.82rem;resize:none"></textarea>
+                                        <div class="d-flex flex-column gap-1">
+                                            <button class="btn btn-sm btn-primary" onclick="submitAnswer(@q.Id)" style="white-space:nowrap;font-size:0.78rem">
+                                                <i class="fa fa-paper-plane me-1"></i>Send Reply
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteQuery(@q.Id)" style="font-size:0.78rem">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (answered.Count > 0)
+            {
+                <div class="table-card">
+                    <div class="px-3 pt-3 pb-2 d-flex align-items-center gap-2">
+                        <span class="section-header"><i class="fa fa-check-circle me-2 text-success"></i>Answered Queries</span>
+                        <span class="badge bg-success">@answered.Count</span>
+                    </div>
+                    @foreach (var q in answered)
+                    {
+                        <div class="p-3 border-bottom" id="query-@q.Id">
+                            <div class="d-flex align-items-start gap-3">
+                                <div style="width:36px;height:36px;border-radius:50%;background:#e8f5e9;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                                    <i class="fa fa-user text-success"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <strong style="font-size:0.85rem">@(q.User?.FullName ?? "Unknown User")</strong>
+                                        <span class="text-muted" style="font-size:0.72rem">@(q.User?.Email)</span>
+                                        <span class="ms-auto text-muted" style="font-size:0.72rem"><i class="fa fa-clock me-1"></i>@q.AskedAt.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</span>
+                                    </div>
+                                    <div style="background:#f7f8fc;border-radius:4px;padding:8px 12px;font-size:0.82rem;color:#1e1e2d;margin-bottom:6px">
+                                        <i class="fa fa-question-circle me-1 text-muted"></i>@q.QuestionText
+                                    </div>
+                                    <div style="background:#e8f5e9;border-left:3px solid #22c55e;border-radius:4px;padding:8px 12px;font-size:0.82rem;color:#166534;margin-bottom:6px">
+                                        <i class="fa fa-check me-1"></i>@q.Answer
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <span class="text-muted" style="font-size:0.7rem">
+                                            <i class="fa fa-user-shield me-1"></i>Answered by @(q.AnsweredByAdmin?.FullName ?? "Admin") · @(q.AnsweredAt?.ToLocalTime().ToString("MMM d, h:mm tt"))
+                                        </span>
+                                        <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="deleteQuery(@q.Id)" style="font-size:0.72rem">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+async function submitAnswer(queryId) {
+    var textarea = document.getElementById('answer-' + queryId);
+    var answer = textarea.value.trim();
+    if (!answer) { textarea.focus(); return; }
+
+    var btn = textarea.closest('.d-flex').querySelector('button.btn-primary');
+    var orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+    try {
+        var res = await fetch('/api/support/answer/' + queryId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ answer: answer })
+        });
+        if (res.ok) {
+            location.reload();
+        } else {
+            alert('Failed to send answer. Please try again.');
+            btn.disabled = false;
+            btn.innerHTML = orig;
+        }
+    } catch {
+        alert('Network error. Please try again.');
+        btn.disabled = false;
+        btn.innerHTML = orig;
+    }
+}
+
+async function deleteQuery(queryId) {
+    if (!confirm('Delete this query?')) return;
+    try {
+        var res = await fetch('/api/support/' + queryId, { method: 'DELETE' });
+        if (res.ok) {
+            document.getElementById('query-' + queryId)?.remove();
+        }
+    } catch {
+        alert('Failed to delete.');
+    }
+}
+</script>
+}

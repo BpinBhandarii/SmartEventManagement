@@ -1,0 +1,6 @@
+@model int
+<span id="support-query-badge"
+      style="display:@(Model > 0 ? "flex" : "none");background:#ef4444;color:#fff;border-radius:50%;width:18px;height:18px;font-size:0.6rem;align-items:center;justify-content:center;font-weight:700;margin-left:auto;flex-shrink:0"
+      data-count="@Model">
+    @(Model > 99 ? "99+" : Model.ToString())
+</span>

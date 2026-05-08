@@ -1,0 +1,171 @@
+@model SmartEventManagement.ViewModels.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex">
+    <partial name="_AdminSidebar" />
+
+    <div class="main-content flex-grow-1">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <button class="btn btn-sm btn-light d-md-none me-2" id="sidebar-toggle">
+                <i class="fa fa-bars"></i>
+            </button>
+            <h5 class="page-title"><i class="fa fa-gauge me-2 text-primary"></i>Dashboard</h5>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary-soft text-primary px-3 py-2 rounded-pill">
+                    <i class="fa fa-user-shield me-1"></i>Admin
+                </span>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <!-- Welcome Banner -->
+            <div class="welcome-banner mb-4">
+                <div class="avatar-circle"><i class="fa fa-user-shield"></i></div>
+                <div>
+                    <h4>Welcome back, Administrator! 👋</h4>
+                    <p>Here's what's happening across the platform today.</p>
+                </div>
+            </div>
+
+            <!-- Stat Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="stat-icon purple"><i class="fa fa-users"></i></div>
+                        <div class="stat-info">
+                            <div class="stat-value">@Model.TotalUsers</div>
+                            <div class="stat-label">Total Users</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="stat-icon pink"><i class="fa fa-calendar-check"></i></div>
+                        <div class="stat-info">
+                            <div class="stat-value">@Model.TotalEvents</div>
+                            <div class="stat-label">Total Events</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="stat-icon orange"><i class="fa fa-clock"></i></div>
+                        <div class="stat-info">
+                            <div class="stat-value">@Model.PendingApprovals</div>
+                            <div class="stat-label">Pending Approvals</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="stat-icon green"><i class="fa fa-ticket"></i></div>
+                        <div class="stat-info">
+                            <div class="stat-value">@Model.TotalRegistrations</div>
+                            <div class="stat-label">Total Registrations</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-8">
+                    <div class="chart-card">
+                        <h6><i class="fa fa-chart-bar me-2 text-primary"></i>Registrations by Month</h6>
+                        <canvas id="regChart" height="100"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="chart-card">
+                        <h6><i class="fa fa-chart-pie me-2 text-primary"></i>Events by Category</h6>
+                        <canvas id="catChart" height="180"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Data -->
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="table-card">
+                        <div class="d-flex align-items-center justify-content-between px-3 pt-3 pb-2">
+                            <span class="section-header"><i class="fa fa-users me-2 text-primary"></i>Recent Users</span>
+                            <a asp-action="ManageUsers" class="btn btn-sm btn-outline-primary">View All</a>
+                        </div>
+                        <table class="table">
+                            <tbody>
+                                @foreach (var u in Model.RecentUsers)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="avatar-initials">@(u.FullName?.Length > 0 ? u.FullName[0].ToString().ToUpper() : "?")</div>
+                                                <div>
+                                                    <div class="fw-600 small">@u.FullName</div>
+                                                    <div class="text-muted" style="font-size:0.75rem">@u.Email</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-pill @(u.Role == "Admin" ? "badge-role-admin" : u.Role == "Organiser" ? "badge-role-organiser" : "badge-role-attendee")">@u.Role</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-pill @(u.IsApproved ? "badge-status-approved" : "badge-status-pending")">
+                                                @(u.IsApproved ? "Active" : "Pending")
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="table-card">
+                        <div class="d-flex align-items-center justify-content-between px-3 pt-3 pb-2">
+                            <span class="section-header"><i class="fa fa-calendar me-2 text-primary"></i>Recent Events</span>
+                            <a asp-action="Events" class="btn btn-sm btn-outline-primary">View All</a>
+                        </div>
+                        <table class="table">
+                            <tbody>
+                                @foreach (var e in Model.RecentEvents)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-600 small">@e.Title</div>
+                                            <div class="text-muted" style="font-size:0.75rem">@e.Organiser?.FullName</div>
+                                        </td>
+                                        <td><span class="small text-muted">@e.Date.ToString("dd MMM")</span></td>
+                                        <td>
+                                            <span class="badge badge-pill
+                                                @(e.Status == "Approved" ? "badge-status-approved" :
+                                                  e.Status == "Pending" ? "badge-status-pending" :
+                                                  e.Status == "Cancelled" ? "badge-status-cancelled" : "badge-status-completed")">
+                                                @e.Status
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function(){
+    var regData = @Html.Raw(ViewBag.RegistrationsByMonth ?? "{}");
+    var catData = @Html.Raw(ViewBag.EventsByCategory ?? "{}");
+    renderBarChart('regChart', Object.keys(regData), Object.values(regData), 'Registrations');
+    renderDoughnutChart('catChart', Object.keys(catData), Object.values(catData));
+    initSignalR('@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value');
+})();
+</script>
+}

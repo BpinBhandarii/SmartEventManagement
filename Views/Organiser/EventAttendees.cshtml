@@ -1,0 +1,121 @@
+@model SmartEventManagement.Models.Event
+@{
+    ViewData["Title"] = "Event Attendees";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var activeRegs = Model.Registrations.Where(r => !r.Cancelled).ToList();
+}
+
+<div class="d-flex">
+    <partial name="_OrganiserSidebar" />
+    <div class="main-content flex-grow-1">
+        <div class="top-bar">
+            <button class="btn btn-sm btn-light d-md-none me-2" id="sidebar-toggle"><i class="fa fa-bars"></i></button>
+            <h5 class="page-title"><i class="fa fa-users me-2 text-primary"></i>@Model.Title — Attendees</h5>
+        </div>
+        <div class="content-area">
+            <!-- Event Info Card -->
+            <div class="card p-3 mb-4" style="background:var(--gradient);color:#fff;border:none">
+                <div class="row">
+                    <div class="col-md-3 text-center border-end border-white border-opacity-25">
+                        <div style="font-size:2rem;font-weight:800">@activeRegs.Count</div>
+                        <div style="opacity:0.8;font-size:0.8rem">Registered</div>
+                    </div>
+                    <div class="col-md-3 text-center border-end border-white border-opacity-25">
+                        <div style="font-size:2rem;font-weight:800">@Model.Capacity</div>
+                        <div style="opacity:0.8;font-size:0.8rem">Capacity</div>
+                    </div>
+                    <div class="col-md-3 text-center border-end border-white border-opacity-25">
+                        <div style="font-size:2rem;font-weight:800">@Model.Feedbacks.Count</div>
+                        <div style="opacity:0.8;font-size:0.8rem">Feedbacks</div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div style="font-size:2rem;font-weight:800">
+                            @(Model.Feedbacks.Any() ? Model.Feedbacks.Average(f => f.Rating).ToString("F1") : "N/A")
+                        </div>
+                        <div style="opacity:0.8;font-size:0.8rem">Avg Rating</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notify Attendees -->
+            @if (activeRegs.Any())
+            {
+                <div class="card p-3 mb-4">
+                    <h6 class="section-header"><i class="fa fa-bell me-2 text-primary"></i>Send Notification</h6>
+                    <form asp-action="NotifyAttendees" method="post" class="d-flex gap-2">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="eventId" value="@Model.Id" />
+                        <input type="text" name="message" class="form-control" placeholder="Type a message for all attendees..." required />
+                        <button type="submit" class="btn btn-gradient" style="white-space:nowrap">
+                            <i class="fa fa-paper-plane me-1"></i>Send
+                        </button>
+                    </form>
+                </div>
+            }
+
+            <!-- Attendees Table -->
+            <div class="table-card mb-4">
+                <div class="px-3 pt-3 pb-2">
+                    <span class="section-header"><i class="fa fa-list me-2 text-primary"></i>Registered Attendees</span>
+                </div>
+                @if (!activeRegs.Any())
+                {
+                    <div class="text-center py-4 text-muted">No registrations yet.</div>
+                }
+                else
+                {
+                    <table class="table">
+                        <thead><tr><th>Attendee</th><th>Registered</th><th>Status</th></tr></thead>
+                        <tbody>
+                            @foreach (var reg in activeRegs)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="avatar-initials">@(reg.Attendee?.FullName[0].ToString().ToUpper() ?? "?")</div>
+                                            <div>
+                                                <div class="fw-600 small">@reg.Attendee?.FullName</div>
+                                                <div class="text-muted" style="font-size:0.73rem">@reg.Attendee?.Email</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="small text-muted">@reg.RegisteredAt.ToString("dd MMM yyyy HH:mm")</td>
+                                    <td><span class="badge badge-pill badge-status-approved">Active</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+
+            <!-- Feedback Section -->
+            @if (Model.Feedbacks.Any())
+            {
+                <div class="table-card">
+                    <div class="px-3 pt-3 pb-2">
+                        <span class="section-header"><i class="fa fa-star me-2 text-primary"></i>Feedback</span>
+                    </div>
+                    <table class="table">
+                        <thead><tr><th>Attendee</th><th>Rating</th><th>Comment</th><th>Date</th></tr></thead>
+                        <tbody>
+                            @foreach (var fb in Model.Feedbacks)
+                            {
+                                <tr>
+                                    <td class="small fw-600">@fb.Attendee?.FullName</td>
+                                    <td>
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            <i class="fa fa-star @(i <= fb.Rating ? "text-warning" : "text-muted")"></i>
+                                        }
+                                    </td>
+                                    <td class="small">@fb.Comment</td>
+                                    <td class="small text-muted">@fb.SubmittedAt.ToString("dd MMM")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

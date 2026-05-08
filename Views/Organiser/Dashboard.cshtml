@@ -1,0 +1,127 @@
+@model SmartEventManagement.ViewModels.OrganiserDashboardViewModel
+@{
+    ViewData["Title"] = "Organiser Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex">
+    <partial name="_OrganiserSidebar" />
+    <div class="main-content flex-grow-1">
+        <div class="top-bar">
+            <button class="btn btn-sm btn-light d-md-none me-2" id="sidebar-toggle"><i class="fa fa-bars"></i></button>
+            <h5 class="page-title"><i class="fa fa-gauge me-2 text-primary"></i>Dashboard</h5>
+            <a asp-action="CreateEvent" class="btn btn-gradient btn-sm">
+                <i class="fa fa-plus me-1"></i>New Event
+            </a>
+        </div>
+        <div class="content-area">
+            <!-- Welcome -->
+            <div class="welcome-banner mb-4">
+                <div class="avatar-circle"><i class="fa fa-user-tie"></i></div>
+                <div>
+                    <h4>Welcome, @Model.OrganiserName! 🎉</h4>
+                    <p>Manage your events and track attendance from here.</p>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="row g-3 mb-4">
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="stat-icon purple"><i class="fa fa-calendar-check"></i></div>
+                        <div class="stat-info">
+                            <div class="stat-value">@Model.TotalEvents</div>
+                            <div class="stat-label">Total Events</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="stat-icon orange"><i class="fa fa-clock"></i></div>
+                        <div class="stat-info">
+                            <div class="stat-value">@Model.PendingEvents</div>
+                            <div class="stat-label">Pending Events</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="stat-icon green"><i class="fa fa-ticket"></i></div>
+                        <div class="stat-info">
+                            <div class="stat-value">@Model.TotalRegistrations</div>
+                            <div class="stat-label">Total Registrations</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="stat-card">
+                        <div class="stat-icon pink"><i class="fa fa-star"></i></div>
+                        <div class="stat-info">
+                            <div class="stat-value">@(Model.AvgFeedbackRating > 0 ? Model.AvgFeedbackRating.ToString("F1") : "N/A")</div>
+                            <div class="stat-label">Avg Rating</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="row g-3 mb-4">
+                <div class="col-12">
+                    <div class="chart-card">
+                        <h6><i class="fa fa-chart-line me-2 text-primary"></i>Registrations Over Time</h6>
+                        <canvas id="regChart" height="80"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Events -->
+            <div class="table-card">
+                <div class="d-flex align-items-center justify-content-between px-3 pt-3 pb-2">
+                    <span class="section-header"><i class="fa fa-calendar me-2 text-primary"></i>My Events</span>
+                    <a asp-action="MyEvents" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr><th>Event</th><th>Date</th><th>Registrations</th><th>Status</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var e in Model.Events)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-600 small">@e.Title</div>
+                                    <div class="small text-muted">@e.Category • @e.Location</div>
+                                </td>
+                                <td class="small text-muted">@e.Date.ToString("dd MMM yyyy")</td>
+                                <td class="small">@e.Registrations.Count(r => !r.Cancelled) / @e.Capacity</td>
+                                <td>
+                                    <span class="badge badge-pill
+                                        @(e.Status == "Approved" ? "badge-status-approved" :
+                                          e.Status == "Pending"  ? "badge-status-pending"  :
+                                          e.Status == "Cancelled"? "badge-status-cancelled": "badge-status-completed")">
+                                        @e.Status
+                                    </span>
+                                </td>
+                                <td>
+                                    <a asp-action="EventAttendees" asp-route-id="@e.Id" class="btn btn-sm btn-outline-primary">
+                                        <i class="fa fa-users me-1"></i>View
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function(){
+    var regData = @Html.Raw(ViewBag.RegistrationsByMonth ?? "{}");
+    renderBarChart('regChart', Object.keys(regData), Object.values(regData), 'Registrations');
+    initSignalR('@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value');
+})();
+</script>
+}

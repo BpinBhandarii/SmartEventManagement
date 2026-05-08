@@ -1,0 +1,71 @@
+@{
+    ViewData["Title"] = "Analytics";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex">
+    <partial name="_OrganiserSidebar" />
+    <div class="main-content flex-grow-1">
+        <div class="top-bar">
+            <button class="btn btn-sm btn-light d-md-none me-2" id="sidebar-toggle"><i class="fa fa-bars"></i></button>
+            <h5 class="page-title"><i class="fa fa-chart-line me-2 text-primary"></i>Analytics</h5>
+        </div>
+        <div class="content-area">
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="stat-icon purple"><i class="fa fa-calendar-check"></i></div>
+                        <div class="stat-info">
+                            <div class="stat-value">@ViewBag.TotalEvents</div>
+                            <div class="stat-label">My Events</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="stat-icon green"><i class="fa fa-ticket"></i></div>
+                        <div class="stat-info">
+                            <div class="stat-value">@ViewBag.TotalRegistrations</div>
+                            <div class="stat-label">Total Registrations</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="stat-icon pink"><i class="fa fa-star"></i></div>
+                        <div class="stat-info">
+                            <div class="stat-value">@(ViewBag.AvgRating > 0 ? ((double)ViewBag.AvgRating).ToString("F1") : "N/A") ⭐</div>
+                            <div class="stat-label">Avg Rating</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <div class="chart-card">
+                        <h6><i class="fa fa-chart-bar me-2 text-primary"></i>Registrations by Month</h6>
+                        <canvas id="regChart" height="120"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="chart-card">
+                        <h6><i class="fa fa-chart-pie me-2 text-primary"></i>Events by Category</h6>
+                        <canvas id="catChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function(){
+    var regData = @Html.Raw(ViewBag.RegistrationsByMonth ?? "{}");
+    var catData = @Html.Raw(ViewBag.EventsByCategory ?? "{}");
+    renderBarChart('regChart', Object.keys(regData), Object.values(regData), 'Registrations');
+    renderDoughnutChart('catChart', Object.keys(catData), Object.values(catData));
+})();
+</script>
+}

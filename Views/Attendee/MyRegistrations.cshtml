@@ -1,0 +1,101 @@
+@model List<SmartEventManagement.Models.Registration>
+@{
+    ViewData["Title"] = "My Registrations";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var feedbackGiven = ViewBag.FeedbackGiven as List<int> ?? new List<int>();
+}
+
+<div class="d-flex">
+    <partial name="_AttendeeSidebar" />
+    <div class="main-content flex-grow-1">
+        <div class="top-bar">
+            <button class="btn btn-sm btn-light d-md-none me-2" id="sidebar-toggle"><i class="fa fa-bars"></i></button>
+            <h5 class="page-title"><i class="fa fa-bookmark me-2 text-primary"></i>My Registrations</h5>
+            <span class="badge bg-primary-soft text-primary px-3 py-2 rounded-pill">
+                @Model.Count(r => !r.Cancelled) active
+            </span>
+        </div>
+        <div class="content-area">
+            @if (!Model.Any())
+            {
+                <div class="text-center py-5">
+                    <i class="fa fa-bookmark fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No registrations yet</h5>
+                    <a asp-action="BrowseEvents" class="btn btn-gradient">Browse Events</a>
+                </div>
+            }
+            else
+            {
+                <div class="table-card">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Event</th>
+                                <th>Date</th>
+                                <th>Organiser</th>
+                                <th>Registered</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var reg in Model)
+                            {
+                                var isPast = reg.Event?.Date < DateTime.Today;
+                                var hasFeedback = feedbackGiven.Contains(reg.EventId);
+
+                                <tr>
+                                    <td>
+                                        <div class="fw-600 small">@reg.Event?.Title</div>
+                                        <div class="text-muted" style="font-size:0.75rem">
+                                            <i class="fa fa-location-dot me-1"></i>@reg.Event?.Location
+                                        </div>
+                                    </td>
+                                    <td class="small text-muted">@reg.Event?.Date.ToString("dd MMM yyyy")</td>
+                                    <td class="small">@reg.Event?.Organiser?.FullName</td>
+                                    <td class="small text-muted">@reg.RegisteredAt.ToString("dd MMM yyyy")</td>
+                                    <td>
+                                        <span class="badge badge-pill @(reg.Cancelled ? "badge-status-cancelled" : "badge-status-approved")">
+                                            @(reg.Cancelled ? "Cancelled" : "Active")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-1 flex-wrap">
+                                            <a asp-action="EventDetails" asp-route-id="@reg.EventId" class="btn btn-sm btn-outline-primary">
+                                                <i class="fa fa-eye"></i>
+                                            </a>
+                                            @if (!reg.Cancelled && !isPast)
+                                            {
+                                                <form asp-action="CancelRegistration" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="registrationId" value="@reg.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                            data-confirm="Cancel registration for '@reg.Event?.Title'?">
+                                                        <i class="fa fa-ban"></i>
+                                                    </button>
+                                                </form>
+                                            }
+                                            @if (isPast && !reg.Cancelled && !hasFeedback)
+                                            {
+                                                <a asp-action="SubmitFeedback" asp-route-eventId="@reg.EventId"
+                                                   class="btn btn-sm btn-warning">
+                                                    <i class="fa fa-star me-1"></i>Rate
+                                                </a>
+                                            }
+                                            @if (hasFeedback)
+                                            {
+                                                <span class="badge bg-success text-white py-2 px-2">
+                                                    <i class="fa fa-check me-1"></i>Rated
+                                                </span>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

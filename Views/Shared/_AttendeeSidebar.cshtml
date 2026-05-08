@@ -1,0 +1,67 @@
+<aside class="app-sidebar">
+    <div class="sidebar-brand">
+        <div class="d-flex align-items-center gap-2">
+            <div style="width:36px;height:36px;border-radius:10px;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#fff;flex-shrink:0">
+                <i class="fa fa-bolt"></i>
+            </div>
+            <div>
+                <div class="brand-text">SmartEvents</div>
+                <div class="brand-sub">Attendee Panel</div>
+            </div>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" asp-controller="Attendee" asp-action="Dashboard">
+                    <i class="fa fa-gauge"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-controller="Attendee" asp-action="BrowseEvents">
+                    <i class="fa fa-magnifying-glass"></i> Browse Events
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-controller="Attendee" asp-action="MyRegistrations">
+                    <i class="fa fa-bookmark"></i> My Registrations
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-controller="Attendee" asp-action="CalendarView">
+                    <i class="fa fa-calendar-days"></i> Calendar
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-controller="Attendee" asp-action="Recommendations">
+                    <i class="fa fa-star"></i> Recommendations
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" asp-controller="Attendee" asp-action="Notifications">
+                    <i class="fa fa-bell"></i> Notifications
+                    @await Component.InvokeAsync("NotificationBell")
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <div style="width:34px;height:34px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.9rem">
+                <i class="fa fa-user"></i>
+            </div>
+            <div>
+                <div style="color:#fff;font-size:0.8rem;font-weight:600">Attendee</div>
+                <div style="color:rgba(255,255,255,0.45);font-size:0.7rem">@User.Identity?.Name</div>
+            </div>
+        </div>
+        <form asp-controller="Account" asp-action="Logout" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent" style="color:rgba(255,101,132,0.85)">
+                <i class="fa fa-right-from-bracket me-2"></i> Logout
+            </button>
+        </form>
+    </div>
+</aside>

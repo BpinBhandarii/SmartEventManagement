@@ -1,0 +1,24 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+## SQLite databases
+*.db
+*.db-shm
+*.db-wal
+app.db
+
+## Secrets / local config
+appsettings.Development.json
+
+## macOS
+.DS_Store
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/

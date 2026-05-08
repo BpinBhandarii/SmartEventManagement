@@ -1,0 +1,8 @@
+@model int
+@if (Model > 0)
+{
+    <span class="badge rounded-pill ms-auto"
+          style="background:#f97316;font-size:0.6rem;min-width:18px;padding:2px 6px">
+        @(Model > 99 ? "99+" : Model.ToString())
+    </span>
+}

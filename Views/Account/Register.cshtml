@@ -1,0 +1,88 @@
+@model SmartEventManagement.ViewModels.RegisterViewModel
+@{
+    ViewData["Title"] = "Register";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="auth-page">
+    <div class="auth-card" style="max-width:480px;">
+        <div class="auth-icon">
+            <i class="fa-solid fa-user-plus"></i>
+        </div>
+        <h2>Create Your Account</h2>
+        <p class="auth-subtitle">Join Smart Event Management today</p>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger rounded-3 py-2 px-3 mb-3">
+                <i class="fa fa-circle-exclamation me-2"></i>
+                <asp-validation-summary model-only="true" class="d-inline"></asp-validation-summary>
+            </div>
+        }
+
+        <form asp-action="Register" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <div class="input-icon-wrapper">
+                    <i class="fa fa-user input-icon"></i>
+                    <input asp-for="FullName" class="form-control" placeholder="Full Name" />
+                </div>
+                <span asp-validation-for="FullName" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <div class="input-icon-wrapper">
+                    <i class="fa fa-envelope input-icon"></i>
+                    <input asp-for="Email" class="form-control" placeholder="Email address" autocomplete="email" />
+                </div>
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <div class="input-icon-wrapper">
+                    <i class="fa fa-lock input-icon"></i>
+                    <input asp-for="Password" class="form-control" placeholder="Password (min 6 chars)" autocomplete="new-password" />
+                </div>
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <div class="input-icon-wrapper">
+                    <i class="fa fa-lock input-icon"></i>
+                    <input asp-for="ConfirmPassword" class="form-control" placeholder="Confirm Password" autocomplete="new-password" />
+                </div>
+                <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-4">
+                <div class="input-icon-wrapper">
+                    <i class="fa fa-users-cog input-icon"></i>
+                    <select asp-for="Role" class="form-select">
+                        <option value="Attendee">Attendee</option>
+                        <option value="Organiser">Organiser</option>
+                    </select>
+                </div>
+                <span asp-validation-for="Role" class="text-danger small"></span>
+                <div class="small text-muted mt-1">
+                    <i class="fa fa-info-circle me-1"></i>
+                    Organiser accounts require admin approval before login.
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-gradient w-100 py-2">
+                <i class="fa fa-user-plus me-2"></i>Create Account
+            </button>
+        </form>
+
+        <hr class="my-4" />
+        <p class="text-center text-muted small mb-0">
+            Already have an account?
+            <a asp-controller="Account" asp-action="Login" class="fw-600">Sign in</a>
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

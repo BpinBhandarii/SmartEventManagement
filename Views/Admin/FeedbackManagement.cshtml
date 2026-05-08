@@ -1,0 +1,81 @@
+@model List<SmartEventManagement.Models.Feedback>
+@{
+    ViewData["Title"] = "Feedback Management";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex">
+    <partial name="_AdminSidebar" />
+    <div class="main-content flex-grow-1">
+        <div class="top-bar">
+            <button class="btn btn-sm btn-light d-md-none me-2" id="sidebar-toggle"><i class="fa fa-bars"></i></button>
+            <h5 class="page-title"><i class="fa fa-star me-2 text-warning"></i>Feedback Management</h5>
+            <span class="badge bg-primary-soft text-primary px-3 py-2 rounded-pill">@Model.Count Reviews</span>
+        </div>
+        <div class="content-area">
+            @if (!Model.Any())
+            {
+                <div class="text-center py-5">
+                    <i class="fa fa-comment-slash fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No feedback submitted yet</h5>
+                </div>
+            }
+            else
+            {
+                <div class="table-card">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Attendee</th>
+                                <th>Event</th>
+                                <th>Rating</th>
+                                <th>Comment</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var fb in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-600 small">@fb.Attendee?.FullName</div>
+                                        <div class="text-muted" style="font-size:0.75rem">@fb.Attendee?.Email</div>
+                                    </td>
+                                    <td class="small fw-600">@fb.Event?.Title</td>
+                                    <td>
+                                        <span class="text-warning fw-600">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <i class="fa @(i <= fb.Rating ? "fa-star" : "fa-star text-muted opacity-25")"></i>
+                                            }
+                                        </span>
+                                        <span class="text-muted small ms-1">@fb.Rating/5</span>
+                                    </td>
+                                    <td class="small text-muted" style="max-width:260px">
+                                        @(fb.Comment?.Length > 120 ? fb.Comment[..120] + "…" : fb.Comment)
+                                    </td>
+                                    <td class="small text-muted">@fb.SubmittedAt.ToString("dd MMM yyyy")</td>
+                                    <td>
+                                        <form asp-action="DeleteFeedback" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="feedbackId" value="@fb.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                    data-confirm="Delete this feedback? This cannot be undone.">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>initSignalR('@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value');</script>
+}

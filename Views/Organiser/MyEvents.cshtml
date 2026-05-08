@@ -1,0 +1,103 @@
+@model List<SmartEventManagement.Models.Event>
+@{
+    ViewData["Title"] = "My Events";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex">
+    <partial name="_OrganiserSidebar" />
+    <div class="main-content flex-grow-1">
+        <div class="top-bar">
+            <button class="btn btn-sm btn-light d-md-none me-2" id="sidebar-toggle"><i class="fa fa-bars"></i></button>
+            <h5 class="page-title"><i class="fa fa-list me-2 text-primary"></i>My Events</h5>
+            <a asp-action="CreateEvent" class="btn btn-gradient btn-sm">
+                <i class="fa fa-plus me-1"></i>New Event
+            </a>
+        </div>
+        <div class="content-area">
+            @if (!Model.Any())
+            {
+                <div class="text-center py-5">
+                    <i class="fa fa-calendar-plus fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No events yet</h5>
+                    <p class="text-muted small">Create your first event to get started!</p>
+                    <a asp-action="CreateEvent" class="btn btn-gradient">
+                        <i class="fa fa-plus me-2"></i>Create Event
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="table-card">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Event</th>
+                                <th>Date & Time</th>
+                                <th>Registrations</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ev in Model)
+                            {
+                                var regCount = ev.Registrations.Count(r => !r.Cancelled);
+                                var pct = ev.Capacity > 0 ? (int)((double)regCount / ev.Capacity * 100) : 0;
+                                <tr>
+                                    <td>
+                                        <div class="fw-600 small">@ev.Title</div>
+                                        <div class="small text-muted">@ev.Category • @ev.Location</div>
+                                    </td>
+                                    <td class="small text-muted">
+                                        @ev.Date.ToString("dd MMM yyyy")<br/>
+                                        <span style="font-size:0.72rem">@ev.Time.ToString(@"hh\:mm")</span>
+                                    </td>
+                                    <td>
+                                        <div class="small mb-1">@regCount / @ev.Capacity</div>
+                                        <div class="capacity-bar">
+                                            <div class="progress">
+                                                <div class="progress-bar" role="progressbar"
+                                                     style="width:@pct%"
+                                                     aria-valuenow="@pct" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-pill
+                                            @(ev.Status == "Approved" ? "badge-status-approved" :
+                                              ev.Status == "Pending"  ? "badge-status-pending"  :
+                                              ev.Status == "Cancelled"? "badge-status-cancelled": "badge-status-completed")">
+                                            @ev.Status
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-1 flex-wrap">
+                                            <a asp-action="EventAttendees" asp-route-id="@ev.Id" class="btn btn-sm btn-outline-primary">
+                                                <i class="fa fa-users"></i>
+                                            </a>
+                                            @if (ev.Status != "Cancelled" && ev.Status != "Completed")
+                                            {
+                                                <a asp-action="EditEvent" asp-route-id="@ev.Id" class="btn btn-sm btn-outline-secondary">
+                                                    <i class="fa fa-pen"></i>
+                                                </a>
+                                                <form asp-action="CancelEvent" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@ev.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                            data-confirm="Cancel event '@ev.Title'? Attendees will be notified.">
+                                                        <i class="fa fa-ban"></i>
+                                                    </button>
+                                                </form>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

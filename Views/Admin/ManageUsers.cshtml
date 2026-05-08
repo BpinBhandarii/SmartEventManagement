@@ -1,0 +1,209 @@
+@model List<SmartEventManagement.Models.ApplicationUser>
+@{
+    ViewData["Title"] = "Manage Users";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var pendingUsers = ViewBag.PendingUsers as List<SmartEventManagement.Models.ApplicationUser> ?? new();
+}
+
+<div class="d-flex">
+    <partial name="_AdminSidebar" />
+
+    <div class="main-content flex-grow-1">
+        <div class="top-bar">
+            <button class="btn btn-sm btn-light d-md-none me-2" id="sidebar-toggle"><i class="fa fa-bars"></i></button>
+            <h5 class="page-title"><i class="fa fa-users me-2 text-primary"></i>Manage Users</h5>
+            <span class="badge bg-primary-soft text-primary px-3 py-2 rounded-pill">
+                @Model.Count Total Users
+            </span>
+        </div>
+
+        <div class="content-area">
+            <!-- Tabs -->
+            <ul class="nav nav-tabs mb-4" id="userTabs">
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#allUsers">
+                        <i class="fa fa-users me-2"></i>All Users <span class="badge bg-secondary ms-1">@Model.Count</span>
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#pendingUsers">
+                        <i class="fa fa-clock me-2"></i>Pending Approvals
+                        @if (pendingUsers.Any())
+                        {
+                            <span class="badge" style="background:#FF9A3C;color:#fff">@pendingUsers.Count</span>
+                        }
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <!-- All Users Tab -->
+                <div class="tab-pane fade show active" id="allUsers">
+                    <div class="table-card">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Registered</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var user in Model)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="avatar-initials">
+                                                    @(user.FullName?.Length > 0 ? user.FullName[0].ToString().ToUpper() : "?")
+                                                </div>
+                                                <div>
+                                                    <div class="fw-600 small">@user.FullName</div>
+                                                    <div class="text-muted" style="font-size:0.75rem">@user.Email</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-pill @(user.Role == "Admin" ? "badge-role-admin" : user.Role == "Organiser" ? "badge-role-organiser" : "badge-role-attendee")">
+                                                @user.Role
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-pill @(user.IsApproved ? "badge-status-approved" : "badge-status-pending") me-1">
+                                                @(user.IsApproved ? "Approved" : "Pending")
+                                            </span>
+                                            @if (!user.IsActive)
+                                            {
+                                                <span class="badge badge-pill badge-status-cancelled">Inactive</span>
+                                            }
+                                        </td>
+                                        <td class="small text-muted">@user.RegisteredAt.ToString("dd MMM yyyy")</td>
+                                        <td>
+                                            @if (user.Role != "Admin")
+                                            {
+                                                <form asp-action="ToggleUserActive" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="userId" value="@user.Id" />
+                                                    <button type="submit" class="btn btn-sm @(user.IsActive ? "btn-outline-warning" : "btn-outline-success") me-1">
+                                                        <i class="fa @(user.IsActive ? "fa-ban" : "fa-circle-check") me-1"></i>@(user.IsActive ? "Deactivate" : "Activate")
+                                                    </button>
+                                                </form>
+                                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#deleteModal"
+                                                        data-userid="@user.Id"
+                                                        data-username="@user.FullName">
+                                                    <i class="fa fa-trash me-1"></i>Delete
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">—</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Pending Approvals Tab -->
+                <div class="tab-pane fade" id="pendingUsers">
+                    @if (!pendingUsers.Any())
+                    {
+                        <div class="text-center py-5">
+                            <i class="fa fa-check-circle fa-3x text-success mb-3"></i>
+                            <h5 class="text-muted">No pending approvals</h5>
+                            <p class="text-muted small">All organiser accounts have been reviewed.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-card">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Email</th>
+                                        <th>Requested</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var user in pendingUsers)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <div class="avatar-initials" style="background:linear-gradient(135deg,#FF9A3C,#FFB347)">
+                                                        @(user.FullName?.Length > 0 ? user.FullName[0].ToString().ToUpper() : "?")
+                                                    </div>
+                                                    <div class="fw-600 small">@user.FullName</div>
+                                                </div>
+                                            </td>
+                                            <td class="small text-muted">@user.Email</td>
+                                            <td class="small text-muted">@user.RegisteredAt.ToString("dd MMM yyyy")</td>
+                                            <td>
+                                                <form asp-action="ApproveUser" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="userId" value="@user.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-success me-1">
+                                                        <i class="fa fa-check me-1"></i>Approve
+                                                    </button>
+                                                </form>
+                                                <form asp-action="RejectUser" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="userId" value="@user.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-danger">
+                                                        <i class="fa fa-xmark me-1"></i>Reject
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger"><i class="fa fa-triangle-exclamation me-2"></i>Delete User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Are you sure you want to delete <strong id="modal-username"></strong>? This will remove all their registrations and notifications. This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form asp-action="DeleteUser" method="post" id="deleteForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="userId" id="modal-userid" />
+                    <button type="submit" class="btn btn-danger"><i class="fa fa-trash me-1"></i>Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.getElementById('deleteModal').addEventListener('show.bs.modal', function (e) {
+    var btn = e.relatedTarget;
+    document.getElementById('modal-userid').value = btn.getAttribute('data-userid');
+    document.getElementById('modal-username').textContent = btn.getAttribute('data-username');
+});
+initSignalR('@User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value');
+</script>
+}

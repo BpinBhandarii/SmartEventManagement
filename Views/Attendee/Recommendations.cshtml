@@ -1,0 +1,80 @@
+@model List<SmartEventManagement.Models.Event>
+@{
+    ViewData["Title"] = "Recommended Events";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var registeredIds = ViewBag.RegisteredEventIds as List<int> ?? new List<int>();
+}
+
+<div class="d-flex">
+    <partial name="_AttendeeSidebar" />
+    <div class="main-content flex-grow-1">
+        <div class="top-bar">
+            <button class="btn btn-sm btn-light d-md-none me-2" id="sidebar-toggle"><i class="fa fa-bars"></i></button>
+            <h5 class="page-title"><i class="fa fa-star me-2 text-primary"></i>Recommended Events</h5>
+        </div>
+        <div class="content-area">
+            <div class="alert alert-info rounded-3 small mb-4">
+                <i class="fa fa-lightbulb me-2"></i>
+                These events are recommended based on your interests and past registrations.
+            </div>
+
+            @if (!Model.Any())
+            {
+                <div class="text-center py-5">
+                    <i class="fa fa-star fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No recommendations yet</h5>
+                    <p class="text-muted small">Register for more events to get personalised recommendations!</p>
+                </div>
+            }
+            else
+            {
+                <div class="row g-3">
+                    @foreach (var ev in Model)
+                    {
+                        var isRegistered = registeredIds.Contains(ev.Id);
+                        var regCount = ev.Registrations?.Count(r => !r.Cancelled) ?? 0;
+                        var pct = ev.Capacity > 0 ? (int)((double)regCount / ev.Capacity * 100) : 0;
+
+                        <div class="col-md-6 col-lg-4">
+                            <div class="event-card">
+                                <div class="event-card-banner">
+                                    @(ev.Category == "Tech" ? "💻" : ev.Category == "Music" ? "🎵" :
+                                      ev.Category == "Sports" ? "⚽" : ev.Category == "Arts" ? "🎨" :
+                                      ev.Category == "Business" ? "💼" : ev.Category == "Education" ? "📚" : "🎉")
+                                </div>
+                                <div class="event-card-body">
+                                    <span class="category-badge">@ev.Category</span>
+                                    <h6>@ev.Title</h6>
+                                    <div class="event-card-meta"><i class="fa fa-calendar"></i> @ev.Date.ToString("dd MMM yyyy")</div>
+                                    <div class="event-card-meta"><i class="fa fa-location-dot"></i> @ev.Location</div>
+                                    <div class="event-card-meta"><i class="fa fa-users"></i> @regCount / @ev.Capacity</div>
+                                </div>
+                                <div class="event-card-footer">
+                                    <div class="d-flex gap-2">
+                                        <a asp-action="EventDetails" asp-route-id="@ev.Id" class="btn btn-sm btn-outline-primary flex-grow-1">Details</a>
+                                        @if (isRegistered)
+                                        {
+                                            <button class="btn btn-sm btn-success flex-grow-1" disabled>
+                                                <i class="fa fa-check me-1"></i>Registered
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <form asp-action="Register" method="post" class="flex-grow-1">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="eventId" value="@ev.Id" />
+                                                <button type="submit" class="btn btn-gradient btn-sm w-100">
+                                                    <i class="fa fa-ticket me-1"></i>Register
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

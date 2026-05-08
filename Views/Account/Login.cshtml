@@ -1,0 +1,63 @@
+@model SmartEventManagement.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Login";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-icon">
+            <i class="fa-solid fa-bolt"></i>
+        </div>
+        <h2>Welcome Back</h2>
+        <p class="auth-subtitle">Sign in to your Smart Events account</p>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger rounded-3 py-2 px-3 mb-3" role="alert">
+                <i class="fa fa-circle-exclamation me-2"></i>
+                <asp-validation-summary model-only="true" class="d-inline"></asp-validation-summary>
+            </div>
+        }
+
+        <form asp-action="Login" method="post">
+            <input type="hidden" name="ReturnUrl" value="@ViewData["ReturnUrl"]" />
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <div class="input-icon-wrapper">
+                    <i class="fa fa-envelope input-icon"></i>
+                    <input asp-for="Email" class="form-control" placeholder="Email address" autocomplete="email" />
+                </div>
+                <span asp-validation-for="Email" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-4">
+                <div class="input-icon-wrapper">
+                    <i class="fa fa-lock input-icon"></i>
+                    <input asp-for="Password" class="form-control" placeholder="Password" autocomplete="current-password" />
+                </div>
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+
+            <div class="form-check mb-4">
+                <input asp-for="RememberMe" class="form-check-input" />
+                <label asp-for="RememberMe" class="form-check-label small">Remember me</label>
+            </div>
+
+            <button type="submit" class="btn btn-gradient w-100 py-2">
+                <i class="fa fa-right-to-bracket me-2"></i>Sign In
+            </button>
+        </form>
+
+        <hr class="my-4" />
+        <p class="text-center text-muted small mb-0">
+            Don't have an account?
+            <a asp-controller="Account" asp-action="Register" class="fw-600">Create one</a>
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
